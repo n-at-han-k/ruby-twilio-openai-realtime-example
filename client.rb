@@ -10,7 +10,7 @@ require 'async/websocket/client'
 
 USER = ARGV.pop || "anonymous"
 #URL = url  + '/twilio-stream'
-URL = "http://localhost:9292/twilio-stream"
+URL = "http://localhost:9292/ai-stream"
 
 Async do |task|
   # Work around for NGrok fake http2

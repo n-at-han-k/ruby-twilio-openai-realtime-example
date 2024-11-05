@@ -3,16 +3,25 @@ Bundler.require :default
 Dotenv.load
 
 require 'async/websocket/adapters/rack'
-require 'set'
+require_relative 'socket/open_ai'
+require_relative 'socket/twilio'
+require_relative 'bridge'
 
-$connections = Set.new
+URL = 'wss://api.openai.com/v1/realtime?model=gpt-4o-realtime-preview-2024-10-01'
+HEADERS = [
+  ["Authorization", "Bearer #{ENV['OPENAI_API_KEY']}"],
+  ["OpenAI-Beta", "realtime=v1"]
+]
+
+require 'set'
+$bridges = Set.new
 
 class IncomingCall
   def self.call(env)
     response = Twilio::TwiML::VoiceResponse.new
     response.say(message: "Connecting you to an agent.")
 
-    url = "wss://#{ENV["HOST"]}/twilio-socket"
+    url = "wss://#{ENV["HOST"]}/twilio-stream"
     puts url
     connect = Twilio::TwiML::Connect.new.stream(url: url)
     response.append(connect)
@@ -21,35 +30,21 @@ class IncomingCall
   end
 end
 
-class TwilioStream
+class AiStream
   def self.call(env)
-    Async::WebSocket::Adapters::Rack.open(env, protocols: ['ws']) do |connection|
-      $connections << connection
-      
-      while message = connection.read
-        $connections.each do |connection|
-          connection.write(message)
-          connection.flush
-        end
-      end
+    begin
+      twilio = Async::WebSocket::Adapters::Rack.open(env, protocols: ['ws'], handler: Socket::Twilio)
+      puts twilio.inspect
+      openai = Async::WebSocket::Client.connect(openai_endpoint, headers: HEADERS, handler: Socket::OpenAi)
+      bridge = Bridge.new twilio, openai
+      $bridges << bridge
     ensure
-      $connections.delete(connection)
+      bridge.close
     end
+  end
 
-    url = 'wss://api.openai.com/v1/realtime'
-    query = '?model=gpt-4o-realtime-preview-2024-10-01'
-    headers = [
-      ["Authorization", "Bearer #{ENV['OPENAI_API_KEY']}"],
-      ["OpenAI-Beta", "realtime=v1"]
-    ]
-	  endpoint = Async::HTTP::Endpoint.parse(url + query, alpn_protocols: Async::HTTP::Protocol::HTTP11.names)
-
-    Async::WebSocket::Client.connect(endpoint, headers: headers) do |connection|
-      while message = connection.read
-        puts message.inspect
-      end
-    end
-
+  def self.openai_endpoint
+	  Async::HTTP::Endpoint.parse(URL, alpn_protocols: Async::HTTP::Protocol::HTTP11.names)
   end
 end
 
@@ -58,8 +53,8 @@ class Application
     request = Rack::Request.new(env)
     if request.path == '/incoming-call'
       IncomingCall.(env)
-    elsif request.path == '/twilio-stream'
-      TwilioStream.(env)
+    elsif request.path == '/ai-stream'
+      AiStream.(env)
     else
       default(env)
     end
@@ -67,16 +62,10 @@ class Application
 
   def self.default(env)
     Async::WebSocket::Adapters::Rack.open(env, protocols: ['ws']) do |connection|
-      $connections << connection
-      
       while message = connection.read
-        $connections.each do |connection|
-          connection.write(message)
-          connection.flush
-        end
+        connection.write(message)
+        connection.flush
       end
-    ensure
-      $connections.delete(connection)
     end or [200, {'content-type' => 'text/html'}, ["Hello World"]] 
   end
 end
