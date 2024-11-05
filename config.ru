@@ -21,7 +21,7 @@ class IncomingCall
     response = Twilio::TwiML::VoiceResponse.new
     response.say(message: "Connecting you to an agent.")
 
-    url = "wss://#{ENV["HOST"]}/twilio-stream"
+    url = "wss://#{ENV["HOST"]}/ai-stream"
     puts url
     connect = Twilio::TwiML::Connect.new.stream(url: url)
     response.append(connect)
@@ -32,12 +32,15 @@ end
 
 class AiStream
   def self.call(env)
-    begin
-      twilio = Async::WebSocket::Adapters::Rack.open(env, protocols: ['ws'], handler: Socket::Twilio)
-      puts twilio.inspect
+    Async::WebSocket::Adapters::Rack.open(env, protocols: ['ws'], handler: Socket::Twilio) do |twilio|
+
       openai = Async::WebSocket::Client.connect(openai_endpoint, headers: HEADERS, handler: Socket::OpenAi)
+
       bridge = Bridge.new twilio, openai
-      $bridges << bridge
+      while message = twilio.read
+        puts message.parse
+      end
+
     ensure
       bridge.close
     end
@@ -63,8 +66,7 @@ class Application
   def self.default(env)
     Async::WebSocket::Adapters::Rack.open(env, protocols: ['ws']) do |connection|
       while message = connection.read
-        connection.write(message)
-        connection.flush
+        puts message.parse
       end
     end or [200, {'content-type' => 'text/html'}, ["Hello World"]] 
   end
