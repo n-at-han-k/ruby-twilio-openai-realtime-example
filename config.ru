@@ -5,9 +5,9 @@ Dotenv.load
 require 'async/websocket/adapters/rack'
 require 'async/barrier'
 
-require_relative 'socket/open_ai'
-require_relative 'socket/twilio'
-require_relative 'bridge'
+require_relative 'lib/socket/open_ai'
+require_relative 'lib/socket/twilio'
+require_relative 'lib/bridge'
 
 URL = 'wss://api.openai.com/v1/realtime?model=gpt-4o-realtime-preview-2024-10-01'
 HEADERS = [
@@ -18,10 +18,9 @@ HEADERS = [
 class IncomingCall
   def self.call(env)
     response = Twilio::TwiML::VoiceResponse.new
-    response.say(message: "Connecting you to an agent.")
+    #response.say(message: "Connecting you to an agent.")
 
     url = "wss://#{ENV["HOST"]}/ai-stream"
-    puts url
     connect = Twilio::TwiML::Connect.new.stream(url: url)
     response.append(connect)
 
@@ -49,7 +48,7 @@ class AiStream
       puts 'DISCONNECTED'
 
     ensure
-      openai.close
+      openai&.close
       openai_task&.stop
     end
   end

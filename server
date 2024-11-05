@@ -1,3 +1,0 @@
-#/bin/bash
-
-falcon serve --bind http://localhost:9292 --count 1 -c config.ru

@@ -5,7 +5,7 @@ class Socket::Twilio < Async::WebSocket::Connection
     super
 
     @stream_sid = nil
-    @latest_media_timestamp = nil
+    @latest_media_timestamp = 0
     @mark_queue = []
   end
 

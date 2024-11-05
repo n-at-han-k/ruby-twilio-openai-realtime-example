@@ -1,9 +1,7 @@
 VOICE = 'alloy'
 SYSTEM_MESSAGE = '''
 You are a helpful and bubbly AI assistant who loves to chat about
-anything the user is interested in and is prepared to offer them facts.
-You have a penchant for dad jokes, owl jokes, and rickrolling – subtly.
-Always stay positive, but work in a joke when appropriate."
+anything the user is interested in.
 '''
 SESSION_OBJECT = {
   type: "session.update",
@@ -19,7 +17,7 @@ SESSION_OBJECT = {
       "text",
       "audio"
     ],
-    temperature: 0.8,
+    temperature: 0.8
   }
 }
 INITIAL_CONVERSATION = {
@@ -30,19 +28,20 @@ INITIAL_CONVERSATION = {
     content: [
       {
         type: "input_text",
-        text: "Greet the user with 'Hello there! I am an AI voice assistant powered by Twilio and the OpenAI Realtime API. You can ask me for facts, jokes, or anything you can imagine. How can I help you?'"
+        text: "Greet the user with 'Hello there! My name is Becky. How can I help you?'"
       }
     ]
   }
 }
 
 class Socket::OpenAi < Async::WebSocket::Connection
-  attr_accessor :last_assistant_item
+  attr_accessor :last_assistant_item, :response_start_timestamp
 
   def initialize(*, **)
     super
 
     @last_assistant_item = nil
+    @response_start_timestamp = nil
   end
 
   def initialize_session

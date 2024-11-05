@@ -29,9 +29,6 @@ class Bridge
     @openai.initialize_session
     @openai.send_system_message
     @openai.get_response
-
-    # Variables for managing state
-    @response_start_timestamp = nil
   end
 
   def handle_twilio(message)
@@ -62,9 +59,6 @@ class Bridge
   # -------------
   def twilio_start(message)
     @twilio.stream_sid = message[:start][:streamSid]
-    @response_start_timestamp = nil
-    @twilio.latest_media_timestamp = 0
-    @openai.last_assistant_item = nil
     # puts '--> [TWILIO] start'
     # puts message.inspect
   end
@@ -79,7 +73,7 @@ class Bridge
     # puts message.inspect
   end
   def twilio_mark(message)
-    @twilio.mark_queue.pop(0) if @twilio.mark_queue.any?
+    @twilio.mark_queue.pop(0) unless @twilio.mark_queue.empty?
     # puts '--> [TWILIO] mark'
     # puts message.inspect
   end
@@ -90,21 +84,21 @@ class Bridge
   def openai_response_audio_delta(message)
     payload = message[:delta]
     @twilio.send_media(payload)
-    if @reponse_start_timestamp.nil?
-      @response_start_timestamp = @twilio.latest_media_timestamp
+    if @openai.response_start_timestamp.nil?
+      @openai.response_start_timestamp = @twilio.latest_media_timestamp
     end
     @openai.last_assistant_item = message[:item_id]
     @twilio.send_mark
   end
   def openai_input_audio_buffer_speech_started(message)
     if @openai.last_assistant_item != nil
-      if @twilio.mark_queue and (@response_start_timestamp != nil)
-        elapsed_time = @twilio.latest_media_timestamp.to_i - @response_start_timestamp.to_i
+      if @twilio.mark_queue and (@openai.response_start_timestamp != nil)
+        elapsed_time = @twilio.latest_media_timestamp.to_i - @openai.response_start_timestamp.to_i
       end
       @openai.conversation_item_truncate(elapsed_time)
       @twilio.send_clear
       @openai.last_assistant_item = nil
-      @response_start_timestamp = nil
+      @openai.response_start_timestamp = nil
     end
   end
 end
