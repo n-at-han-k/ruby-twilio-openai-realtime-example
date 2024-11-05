@@ -8,8 +8,10 @@ class Bridge
     #@openai.get_response
   end
 
-  def close
-    @twilio.close
-    @openai.close
+  def handle_twilio(message)
+    $stdout.puts message.parse
+  end
+  def handle_openai(message)
+    $stdout.puts message.parse
   end
 end

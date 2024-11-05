@@ -6,6 +6,7 @@ require 'async/websocket/adapters/rack'
 require_relative 'socket/open_ai'
 require_relative 'socket/twilio'
 require_relative 'bridge'
+require 'async/barrier'
 
 URL = 'wss://api.openai.com/v1/realtime?model=gpt-4o-realtime-preview-2024-10-01'
 HEADERS = [
@@ -35,14 +36,23 @@ class AiStream
     Async::WebSocket::Adapters::Rack.open(env, protocols: ['ws'], handler: Socket::Twilio) do |twilio|
 
       openai = Async::WebSocket::Client.connect(openai_endpoint, headers: HEADERS, handler: Socket::OpenAi)
-
       bridge = Bridge.new twilio, openai
-      while message = twilio.read
-        puts message.parse
+
+      openai_task = Async::Task.current.async do
+        while message = openai.read
+          bridge.handle_openai(message)
+        end
       end
 
+      while message = twilio.read
+        bridge.handle_twilio(message)
+      end
+
+      puts 'DISCONNECTED'
+
     ensure
-      bridge.close
+      openai.close
+      openai_task&.stop
     end
   end
 
