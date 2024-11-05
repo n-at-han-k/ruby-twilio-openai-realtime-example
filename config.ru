@@ -3,10 +3,11 @@ Bundler.require :default
 Dotenv.load
 
 require 'async/websocket/adapters/rack'
+require 'async/barrier'
+
 require_relative 'socket/open_ai'
 require_relative 'socket/twilio'
 require_relative 'bridge'
-require 'async/barrier'
 
 URL = 'wss://api.openai.com/v1/realtime?model=gpt-4o-realtime-preview-2024-10-01'
 HEADERS = [
@@ -40,12 +41,12 @@ class AiStream
 
       openai_task = Async::Task.current.async do
         while message = openai.read
-          bridge.handle_openai(message)
+          bridge.handle_openai(message.parse)
         end
       end
 
       while message = twilio.read
-        bridge.handle_twilio(message)
+        bridge.handle_twilio(message.parse)
       end
 
       puts 'DISCONNECTED'

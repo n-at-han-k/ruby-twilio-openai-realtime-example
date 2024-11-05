@@ -9,9 +9,19 @@ class Bridge
   end
 
   def handle_twilio(message)
-    $stdout.puts message.parse
+    begin
+      event = message[:event] + '_event'
+      @twilio.send(event, message)
+    rescue
+      # handle error here
+    end
   end
   def handle_openai(message)
-    $stdout.puts message.parse
+    begin
+      event = message[:type].gsub('.', '_') + '_event'
+      @openai.send(event, message)
+    rescue
+      # handle error here
+    end
   end
 end
