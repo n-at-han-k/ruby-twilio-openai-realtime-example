@@ -15,9 +15,6 @@ HEADERS = [
   ["OpenAI-Beta", "realtime=v1"]
 ]
 
-require 'set'
-$bridges = Set.new
-
 class IncomingCall
   def self.call(env)
     response = Twilio::TwiML::VoiceResponse.new
