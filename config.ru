@@ -35,7 +35,7 @@ class AiStream
       openai = Async::WebSocket::Client.connect(openai_endpoint, headers: HEADERS, handler: Socket::OpenAi)
       bridge = Bridge.new twilio, openai
 
-      openai_task = Async::Task.current.async do
+      openai_task = Async do
         while message = openai.read
           bridge.handle_openai(message.parse)
         end
