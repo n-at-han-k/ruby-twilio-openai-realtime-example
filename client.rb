@@ -9,13 +9,13 @@ require 'async/http/endpoint'
 require 'async/websocket/client'
 
 USER = ARGV.pop || "anonymous"
-URL = url 
-#URL = "http://localhost:9292"
+#URL = url  + '/twilio-stream'
+URL = "http://localhost:9292/twilio-stream"
 
 Async do |task|
   # Work around for NGrok fake http2
-  #endpoint = Async::HTTP::Endpoint.parse(URL)
-  endpoint = Async::HTTP::Endpoint.parse(URL, alpn_protocols: Async::HTTP::Protocol::HTTP11.names)
+  endpoint = Async::HTTP::Endpoint.parse(URL)
+  #endpoint = Async::HTTP::Endpoint.parse(URL, alpn_protocols: Async::HTTP::Protocol::HTTP11.names)
 	
 	Async::WebSocket::Client.connect(endpoint) do |connection|
 		input_task = task.async do
