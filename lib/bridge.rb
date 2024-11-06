@@ -54,6 +54,26 @@ class Bridge
 
   private
 
+  def is_responding?
+    if @openai.last_assistant_item.nil? && @openai.response_start_timestamp.nil?
+      false
+    else
+      true
+    end
+  end
+
+  def elapsed_response_time
+    @twilio.latest_media_timestamp.to_i - @openai.response_start_timestamp.to_i
+  end
+
+  def stop_responding
+    @openai.conversation_item_truncate(elapsed_response_time)
+    @twilio.send_clear
+    @openai.last_assistant_item = nil
+    @openai.response_start_timestamp = nil
+  end
+
+
   # -------------
   # Twilio EVENTS
   # -------------
@@ -84,21 +104,13 @@ class Bridge
   def openai_response_audio_delta(message)
     payload = message[:delta]
     @twilio.send_media(payload)
-    if @openai.response_start_timestamp.nil?
+    unless is_responding?
       @openai.response_start_timestamp = @twilio.latest_media_timestamp
     end
     @openai.last_assistant_item = message[:item_id]
     @twilio.send_mark
   end
   def openai_input_audio_buffer_speech_started(message)
-    if @openai.last_assistant_item != nil
-      if @twilio.mark_queue and (@openai.response_start_timestamp != nil)
-        elapsed_time = @twilio.latest_media_timestamp.to_i - @openai.response_start_timestamp.to_i
-      end
-      @openai.conversation_item_truncate(elapsed_time)
-      @twilio.send_clear
-      @openai.last_assistant_item = nil
-      @openai.response_start_timestamp = nil
-    end
+    stop_responding if is_responding?
   end
 end
