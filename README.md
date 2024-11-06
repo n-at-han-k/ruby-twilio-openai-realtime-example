@@ -1,20 +1,29 @@
 # Ruby Twilio OpenAI Realtime Example
 
+This is an example Rack server demonstrate bi-directional asynchronous streaming in ruby using websockets.
+We use the [falcon](https://github.com/socketry/falcon) server and the [asyc](https://github.com/socketry/async) gem.
+
 ## Setup
 Add your OpenAI API key to the `.env` file.
-```
-# .env
+```sh
 OPENAI_API_KEY=abcdefghijklexample
 HOST=example.ngrok.com
 ```
+Then run 
+```sh
+bin/server
+```
+You'll need to set up your twilio webhooks to point to your server.
+If you're on a local dev machine then you can use NGrok to connect your localhost to a public url.
+```
+ngrok http localhost:9292
+```
 
-## Twilio Dev Phone for testing
-To use the Dev Phone, you'll need to first have [an up-to-date installation of the Twilio CLI](https://www.twilio.com/docs/twilio-cli/getting-started/install), as well as access to a spare Twilio phone number. That means that [you'll need an upgraded Twilio account](https://support.twilio.com/hc/en-us/articles/223183208-Upgrading-to-a-paid-Twilio-Account?_ga=2.24955578.160882329.1650457443-360531395.1625234680), not a trial account.
+### Twilio Dev Phone
+Twilio provide a brilliant application called [dev phone](https://github.com/twilio-labs/dev-phone) for testing calling numbers using your web browser.
+Install the [Twilio CLI](https://www.twilio.com/docs/twilio-cli/getting-started/install).
+Then run the following command:
 
-Once you've installed the Twilio CLI, you're ready to add the Dev Phone plugin with the following command:
-
-`twilio plugins:install @twilio-labs/plugin-dev-phone`
-
-Once it's installed, you can run the Dev Phone with the following command:
-
-`twilio dev-phone`
+```sh
+twilio dev-phone
+```
