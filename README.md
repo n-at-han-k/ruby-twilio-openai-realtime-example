@@ -1,7 +1,7 @@
 # Ruby Twilio OpenAI Realtime Example
 
 This is an example Rack server demonstrate bi-directional asynchronous streaming in ruby using websockets.
-We use the [falcon](https://github.com/socketry/falcon) server and the [asyc](https://github.com/socketry/async) gem.
+We use the [falcon](https://github.com/socketry/falcon) server and the [async](https://github.com/socketry/async) gem.
 
 ## Setup
 Add your OpenAI API key to the `.env` file.
