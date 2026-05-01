@@ -1,5 +1,7 @@
 # Ruby Twilio OpenAI Realtime Example
 
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/n-at-han-k/ruby-twilio-openai-realtime-example)
+
 This is an example Rack server demonstrate bi-directional asynchronous streaming in ruby using websockets.
 We use the [falcon](https://github.com/socketry/falcon) server and the [async](https://github.com/socketry/async) gem.
 
